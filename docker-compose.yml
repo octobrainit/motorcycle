@@ -1,0 +1,77 @@
+version: '3.18'
+
+networks:
+  mynet:
+    driver: bridge
+
+services:
+  container-dev:
+    build:
+      context: .
+      dockerfile: dockerfile.remote
+    container_name: container.dev
+    networks:
+      - mynet
+    volumes:
+      - ".:/app"
+    ports:
+      - "8082:8082"
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile.application
+    container_name: container.app
+    depends_on:
+      - database
+    networks:
+      - mynet
+    ports:
+      - "8085:8080"
+  database:
+    image: postgres:latest
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "motorcyledb"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s  
+    restart: always
+    container_name: database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Ev@luat3!
+      POSTGRES_DB: motorcyledb
+    networks:
+     - mynet
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis
+    command: redis-server --requirepass Redis2019!
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mynet
+  blobstorage:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: blob
+    networks:
+      - mynet
+    ports:
+      - "10000:10000" # Blob service port
+      - "10001:10001" # Blob service HTTP port
+      - "10002:10002" # Blob service HTTPS port
+      - "10003:10003" # Blob service HTTP admin port
+      - "10004:10004" # Blob service HTTPS admin port
+      - "10005:10005" # Queue service port
+      - "10006:10006" # Queue service HTTP port
+      - "10007:10007" # Queue service HTTPS port
+      - "10008:10008" # Queue service HTTP admin port
+      - "10009:10009" # Queue service HTTPS admin port
+      - "10010:10010" # Table service port
+      - "10011:10011" # Table service HTTP port
+      - "10012:10012" # Table service HTTPS port
+      - "10013:10013" # Table service HTTP admin port
+      - "10014:10014" # Table service HTTPS admin port  
+  

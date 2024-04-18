@@ -1,0 +1,30 @@
+name: Publish Docker image
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v3
+      with: 
+        dotnet-version: '8.0.x'
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Listing folder
+      run: ls
+    - name: Build Docker image
+      run: docker build -t xpto1/motorcycle:latest -f dockerfile.application .
+    - name: Run unit tests
+      run: dotnet test --logger "trx;LogFileName=test_results.trx"
+    - name: Push Docker image if tests pass
+      if: success()
+      run: |
+        echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        docker push xpto1/motorcycle:latest
